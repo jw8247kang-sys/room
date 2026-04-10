@@ -474,7 +474,8 @@
       <div class="progress-bar"><div class="progress-fill" id="progress-fill" style="width:0%"></div></div>
       <div class="stage-dots">
         <div class="dot active" id="dot-0">1</div><div class="dot" id="dot-1">2</div>
-        <div class="dot" id="dot-2">3</div><div class="dot" id="dot-3">4</div><div class="dot" id="dot-4">5</div>
+        <div class="dot" id="dot-2">3</div><div class="dot" id="dot-3">4</div>
+        <div class="dot" id="dot-4">5</div><div class="dot" id="dot-5">6</div>
       </div>
     </div>
 
@@ -483,8 +484,10 @@
         <span class="stage-emoji" id="card-emoji">🚪</span>
         <div><span class="stage-badge" id="card-badge">STAGE 1</span><div class="stage-title" id="card-title">로딩 중...</div></div>
       </div>
-      <div class="card-image-wrap">
-        <div class="card-image-placeholder">
+      <div class="card-image-wrap" id="card-image-wrap">
+        <img id="stage-photo" src="" alt="스테이지 사진"
+          style="width:100%;height:100%;object-fit:cover;display:none;border-radius:13px;">
+        <div class="card-image-placeholder" id="img-placeholder">
           <span class="placeholder-icon" id="placeholder-icon">🚪</span>
           <p class="placeholder-text" id="placeholder-text">이동 중...</p>
         </div>
@@ -497,10 +500,6 @@
       <div class="card-body">
         <div class="mission-label">🎯 미션</div>
         <div class="mission-text" id="mission-text">로딩 중...</div>
-        <div class="think-box">
-          <div class="think-box-title">🧠 생각해봐요</div>
-          <span id="think-text">로딩 중...</span>
-        </div>
         <button class="hint-toggle-btn" id="hint-btn" onclick="toggleHint()">💡 힌트가 필요해요 (클릭해서 보기)</button>
         <div class="hint-box" id="hint-box" style="display:none;"><span class="hint-icon">💡</span><span id="hint-text">힌트 내용</span></div>
         <input class="answer-input" id="answer-input" type="text" placeholder="정답 입력" maxlength="15" autocomplete="off" onkeydown="if(event.key==='Enter') checkAnswer()">
@@ -531,7 +530,8 @@
       <div class="cert-name" id="cert-name">탐험가</div>
       <div class="cert-sub" id="cert-sub">위 탐험가는 우리 아파트 단지를 직접 탐험하며<br>5개의 미션을 모두 훌륭히 완수하였기에<br>이 수료증을 드립니다.</div>
       <div class="cert-badges">
-        <div class="cert-badge"><span>🚪</span>정문 탐험</div>
+        <div class="cert-badge"><span>🌳</span>나무 탐험</div>
+        <div class="cert-badge"><span>🦒</span>기린 미션</div>
         <div class="cert-badge"><span>🛝</span>놀이터</div>
         <div class="cert-badge"><span>📋</span>게시판</div>
         <div class="cert-badge"><span>🌳</span>나무 박사</div>
@@ -613,19 +613,34 @@ function prevSlide(){ if(currentSlide>0) showSlide(currentSlide-1); }
 // ══════════════════════════════
 const STAGES = [
   {
-    emoji:'🚪', color:['#FF6B6B','#ff8e53'], badge:'STAGE 1', title:'아파트 정문을 찾아라!',
-    placeholderIcon:'🚪', placeholderText:'아파트 정문으로 이동하세요!',
-    worksheetRef:'학습지 1번 문제를 먼저 읽고 정문으로 이동하세요.',
-    mission:'정문의 <em>아파트 이름 간판</em>을 찾아보세요.<br>간판에서 <em>한글로 된 글자</em>가 몇 개인지 세어보세요!',
-    thinkText:'간판에 한글, 숫자, 영어가 섞여 있을 수 있어요. 한글 글자만 골라서 세는 게 포인트! 손가락으로 하나씩 짚어봐요.',
-    hint:'힌트: 간판 글자를 손가락으로 하나씩 짚으며 세어보세요. 숫자와 영어는 빼야 해요!',
-    answers:['4','네','다섯','5','여섯','6'],
-    wrongMsg:'한글 글자만 골라서 세어보세요! 숫자와 영어는 빼야 해요 🤭',
-    correctMsg:'정답이에요! 대단한 탐험가예요! 🎉',
+    emoji:'🌳', color:['#4CAF50','#8BC34A'], badge:'STAGE 1-1', title:'나무 놀이터를 탐험하라!',
+    placeholderIcon:'🌳', placeholderText:'나무 놀이터로 이동하세요!',
+    image: '', // ← 사진 파일명 입력: 예) 'stage1-1.jpg'
+    worksheetRef:'학습지 1번 문제를 먼저 읽고 나무 놀이터로 이동하세요.',
+    mission:'놀이터 입구 <em>표지판</em>을 찾아보세요.<br>이 놀이터의 이름은 <em>○○○○ 트리</em>입니다.<br>빈칸에 들어갈 말은 무엇인가요?',
+    thinkText:'표지판에 한글로 놀이터 이름이 적혀 있어요. 트리 앞에 오는 단어가 뭔지 잘 읽어봐요! 초록색 집 모양 안내판을 찾아보세요 🏡',
+    hint:'힌트: 놀이터 입구 근처 초록색 안내판을 찾아보세요. 영어처럼 보이지만 한글로도 읽을 수 있어요!',
+    answers:['어드벤처','어드벤쳐'],
+    wrongMsg:'표지판을 다시 한번 찾아봐요! ○○○○ 트리에서 빈칸을 채워보세요 🌳',
+    correctMsg:'정답! 이제 기린을 찾으러 가볼까요? 두 번째 힌트가 기다리고 있어요! 🦒',
+    noTransit: true, // 이동 안내 없이 바로 다음 스테이지로
+  },
+  {
+    emoji:'🦒', color:['#FF9800','#FFC107'], badge:'STAGE 1-2', title:'기린의 비밀을 풀어라!',
+    placeholderIcon:'🦒', placeholderText:'기린 키 측정판을 찾아보세요!',
+    image: '', // ← 사진 파일명 입력: 예) 'stage1-2.jpg'
+    worksheetRef:'학습지 1번 2번 문제를 풀고 최종 암호를 완성하세요.',
+    mission:'기린 키 측정판의 숫자들을 살펴보세요.<br>숫자들은 <em>얼마씩 커지고</em> 있나요?<br>그 숫자가 이번 힌트예요!',
+    thinkText:'60, 80, 100, 120... 숫자가 규칙적으로 커지고 있어요. 몇씩 커지는지 찾아보세요! 워크북에 적어두면 도움이 돼요 ✏️',
+    hint:'힌트: 60에서 80이 되려면 얼마를 더해야 할까요? 그 숫자가 바로 답이에요!',
+    answers:['20','이십'],
+    wrongMsg:'60 → 80 → 100... 얼마씩 커지고 있는지 다시 세어볼까요? 🦒',
+    correctMsg:'완벽해요! 이제 워크북에서 최종 암호 어드벤처20을 완성하세요! 🎉',
   },
   {
     emoji:'🛝', color:['#4ECDC4','#2ecc71'], badge:'STAGE 2', title:'놀이터의 비밀 숫자!',
     placeholderIcon:'🛝', placeholderText:'단지 놀이터로 이동하세요!',
+    image: '', // ← 사진 파일명 입력: 예) 'stage2.jpg'
     worksheetRef:'학습지 2번 문제를 읽고 놀이터 안전 표지판을 찾아보세요.',
     mission:'놀이터에서 <em>안전 표지판</em>을 찾아보세요.<br>표지판에 적힌 숫자들을 <em>모두 더한 값</em>을 입력하세요!',
     thinkText:'표지판에는 여러 숫자가 있어요. (예: 이용 나이, 무게 제한 등) 눈에 보이는 숫자를 모두 찾아서 더해봐요!',
@@ -637,6 +652,7 @@ const STAGES = [
   {
     emoji:'📋', color:['#A855F7','#6366f1'], badge:'STAGE 3', title:'게시판 암호 해독!',
     placeholderIcon:'📋', placeholderText:'관리사무소 게시판으로 이동!',
+    image: '', // ← 사진 파일명 입력: 예) 'stage3.jpg'
     worksheetRef:'학습지 3번을 읽고 게시판에서 단서를 찾아보세요.',
     mission:'아파트 <em>공지 게시판</em>에서 가장 최근 공지를 찾아보세요.<br>제목에서 <em>동물 이름</em>이 들어간 단어를 입력하세요!',
     thinkText:'공지 제목에 동물 이름이 숨어 있을 수도 있어요. 학습지의 힌트를 잘 활용하세요!',
@@ -648,6 +664,7 @@ const STAGES = [
   {
     emoji:'🌳', color:['#22c55e','#16a34a'], badge:'STAGE 4', title:'나무 박사가 되어라!',
     placeholderIcon:'🌳', placeholderText:'단지 조경 공간으로 이동하세요!',
+    image: '', // ← 사진 파일명 입력: 예) 'stage4.jpg'
     worksheetRef:'학습지 4번을 참고하여 입구 조경 공간을 탐험하세요.',
     mission:'단지 입구 <em>왼쪽 조경 공간</em>의 나무를 찾아보세요.<br>나무 팻말 이름을 보고, <em>이 나무 잎은 몇 가지 색?</em>을 맞혀보세요!',
     thinkText:'나무 이름을 찾은 다음, 그 나무의 잎이 계절에 따라 몇 가지 색으로 변하는지 생각해봐요. 학습지에 힌트가 있어요!',
@@ -659,6 +676,7 @@ const STAGES = [
   {
     emoji:'🔑', color:['#f59e0b','#ef4444'], badge:'STAGE 5 ⭐', title:'최종 미션: 비밀번호!',
     placeholderIcon:'🏢', placeholderText:'관리사무소 앞으로 이동하세요!',
+    image: '', // ← 사진 파일명 입력: 예) 'stage5.jpg'
     worksheetRef:'학습지 5번 최종 문제! 지금까지 모은 단서를 모두 활용하세요.',
     mission:'지금까지 찾은 단서들을 학습지에 모아보세요.<br>학습지에 완성된 <em>비밀 코드 4자리</em>를 입력하면 탐험 완료!',
     thinkText:'스테이지 1~4에서 찾은 숫자 단서들을 학습지에 적어두었나요? 그 숫자들을 조합하면 비밀 코드가 완성돼요!',
@@ -670,29 +688,31 @@ const STAGES = [
 ];
 
 // 스테이지 간 이동 안내 데이터
+// noTransit: true 인 스테이지는 이동 안내 없이 바로 다음으로 (인덱스 0 = 1-1→1-2)
 const TRANSIT_DATA = [
-  { // 1→2 클리어 후
-    bgColor:['#FF6B6B','#FF8E53'],
-    icon:'🎊', label:'STAGE 1 클리어!', title:`잘했어요! 이제 놀이터로!`,
-    clearIcon:'🌟', clearStrong:'스테이지 1 클리어!', clearSpan:'정문 탐험을 완료했어요!',
-    nextIcon:'🛝', nextName:'단지 놀이터', nextDesc:'정문에서 단지 안쪽으로 직진하면 있어요',
+  null, // 0번(1-1→1-2): noTransit이므로 사용 안 함
+  { // 1번(1-2→2) 클리어 후
+    bgColor:['#FF9800','#FFC107'],
+    icon:'🎊', label:'STAGE 1 클리어!', title:'기린 미션 완료! 다음 장소로!',
+    clearIcon:'🌟', clearStrong:'스테이지 1 클리어!', clearSpan:'나무 놀이터 탐험을 완료했어요!',
+    nextIcon:'🛝', nextName:'단지 놀이터', nextDesc:'단지 안쪽으로 이동하세요',
     walk:'도보 약 1~2분', tip:'이동하면서 학습지 2번 문제를 미리 읽어봐요!',
   },
-  { // 2→3 클리어 후
+  { // 2번(2→3) 클리어 후
     bgColor:['#4ECDC4','#2ecc71'],
     icon:'🎊', label:'STAGE 2 클리어!', title:'대단해요! 게시판으로!',
     clearIcon:'🌟', clearStrong:'스테이지 2 클리어!', clearSpan:'놀이터 비밀 숫자를 찾았어요!',
     nextIcon:'📋', nextName:'관리사무소 게시판', nextDesc:'관리사무소 건물 입구 근처에 있어요',
     walk:'도보 약 2분', tip:'이동하면서 학습지 3번 문제를 미리 읽어봐요!',
   },
-  { // 3→4 클리어 후
+  { // 3번(3→4) 클리어 후
     bgColor:['#A855F7','#6366f1'],
     icon:'🎊', label:'STAGE 3 클리어!', title:'암호 해독 성공! 조경으로!',
     clearIcon:'🌟', clearStrong:'스테이지 3 클리어!', clearSpan:'게시판 암호를 해독했어요!',
     nextIcon:'🌳', nextName:'단지 조경 공간', nextDesc:'단지 입구 왼쪽 화단 근처예요',
     walk:'도보 약 1분', tip:'이동하면서 학습지 4번 문제를 미리 읽어봐요!',
   },
-  { // 4→5 클리어 후
+  { // 4번(4→5) 클리어 후
     bgColor:['#22c55e','#16a34a'],
     icon:'🌟', label:'STAGE 4 클리어!', title:'이제 최종 미션이에요!',
     clearIcon:'🏅', clearStrong:'스테이지 4 클리어!', clearSpan:'나무 박사가 됐어요! 마지막이에요!',
@@ -739,6 +759,17 @@ function loadStage(idx) {
   document.getElementById('card-title').textContent=s.title;
   document.getElementById('placeholder-icon').textContent=s.placeholderIcon;
   document.getElementById('placeholder-text').textContent=s.placeholderText;
+  // 사진 처리: image 필드가 있으면 사진 표시, 없으면 이모지 플레이스홀더
+  const photo = document.getElementById('stage-photo');
+  const placeholder = document.getElementById('img-placeholder');
+  if(s.image) {
+    photo.src = s.image;
+    photo.style.display = 'block';
+    placeholder.style.display = 'none';
+  } else {
+    photo.style.display = 'none';
+    placeholder.style.display = 'block';
+  }
   document.getElementById('worksheet-ref').textContent=s.worksheetRef;
   // 미션 텍스트에 이름 삽입
   document.getElementById('mission-text').innerHTML =
@@ -813,6 +844,7 @@ function checkAnswer() {
     // 잠깐 후 다음으로
     setTimeout(()=>{
       if(current===STAGES.length-1){ showReward(); }
+      else if(STAGES[current].noTransit){ current++; loadStage(current); } // 이동 안내 없이 바로
       else { showTransit(current); }
     }, 1800);
   } else {
@@ -858,7 +890,7 @@ function showReward() {
     `${now.getFullYear()}년 ${now.getMonth()+1}월 ${now.getDate()}일`;
   document.getElementById('cert-name').textContent=n();
   document.getElementById('cert-sub').textContent=
-    `위 ${n()}은(는) 우리 아파트 단지를 직접 탐험하며\n5개의 미션을 모두 훌륭히 완수하였기에\n이 수료증을 드립니다.`;
+    `위 ${n()}은(는) 우리 아파트 단지를 직접 탐험하며\n6개의 미션을 모두 훌륭히 완수하였기에\n이 수료증을 드립니다.`;
   document.getElementById('reward-msg').innerHTML=
     `<span class="player-name">${n()}</span>은(는) 진정한 탐험대 대장이에요!<br>우리 아파트의 모든 비밀을 밝혀냈어요. 🏅<br>다음에도 또 탐험해요!`;
 
@@ -893,7 +925,7 @@ function spawnConfetti(){
 }
 
 function shareResult(){
-  const text=`🏆 ${n()} 탐험대 완료!\n우리 아파트 5개 미션을 모두 해결했어요! ⭐⭐⭐⭐⭐\n탐험대 수료증 획득! 🏅`;
+  const text=`🏆 ${n()} 탐험대 완료!\n우리 아파트 6개 미션을 모두 해결했어요! ⭐⭐⭐⭐⭐\n탐험대 수료증 획득! 🏅`;
   if(navigator.share){ navigator.share({title:'우리 아파트 탐험대 완료!',text}); }
   else if(navigator.clipboard){ navigator.clipboard.writeText(text).then(()=>alert('📋 클립보드에 복사됐어요!')); }
   else alert(text);
