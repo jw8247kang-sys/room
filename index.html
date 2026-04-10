@@ -1,0 +1,910 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>🏠 우리 아파트 탐험대!</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Jua&family=Nanum+Gothic:wght@400;700;800&display=swap');
+
+  :root {
+    --sky: #A8D8EA;
+    --sun: #FFD93D;
+    --grass: #6BCB77;
+    --brick: #FF6B6B;
+    --cream: #FFF9F0;
+    --dark: #2D3436;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Nanum Gothic', sans-serif; background: var(--sky); min-height: 100vh; overflow-x: hidden; }
+
+  /* ── 배경 ── */
+  .bg-clouds { position:fixed; top:0; left:0; width:100%; height:100%; pointer-events:none; z-index:0; overflow:hidden; }
+  .cloud { position:absolute; background:white; border-radius:50px; opacity:0.65; animation:drift linear infinite; }
+  .cloud::before,.cloud::after { content:''; position:absolute; background:white; border-radius:50%; }
+  .cloud1{width:80px;height:28px;top:8%;animation-duration:28s;animation-delay:-8s}
+  .cloud1::before{width:36px;height:36px;top:-18px;left:12px}.cloud1::after{width:26px;height:26px;top:-12px;left:36px}
+  .cloud2{width:60px;height:22px;top:20%;animation-duration:22s;animation-delay:-14s}
+  .cloud2::before{width:28px;height:28px;top:-14px;left:8px}.cloud2::after{width:20px;height:20px;top:-9px;left:28px}
+  .cloud3{width:100px;height:32px;top:5%;animation-duration:34s;animation-delay:-2s}
+  .cloud3::before{width:44px;height:44px;top:-22px;left:16px}.cloud3::after{width:32px;height:32px;top:-15px;left:48px}
+  @keyframes drift{from{transform:translateX(-160px)}to{transform:translateX(110vw)}}
+  .grass-bar{position:fixed;bottom:0;left:0;width:100%;height:60px;background:var(--grass);z-index:0;border-top:4px solid #4caf50}
+
+  /* ── 공통 애니메이션 ── */
+  @keyframes popIn{from{opacity:0;transform:scale(0.85) translateY(20px)}to{opacity:1;transform:scale(1) translateY(0)}}
+  @keyframes slideInR{from{opacity:0;transform:translateX(40px) scale(0.96)}to{opacity:1;transform:translateX(0) scale(1)}}
+  @keyframes slideDown{from{opacity:0;transform:translateY(-12px)}to{opacity:1;transform:translateY(0)}}
+  @keyframes fadeIn{from{opacity:0}to{opacity:1}}
+  @keyframes bounce{from{opacity:0;transform:scale(0)}to{opacity:1;transform:scale(1)}}
+  @keyframes shimmer{0%,100%{opacity:1}50%{opacity:0.6}}
+  @keyframes shake{0%,100%{transform:translateX(0)}20%{transform:translateX(-8px)}40%{transform:translateX(8px)}60%{transform:translateX(-6px)}80%{transform:translateX(6px)}}
+  @keyframes pulse{0%,100%{box-shadow:0 0 0 4px rgba(255,255,255,0.3)}50%{box-shadow:0 0 0 8px rgba(255,255,255,0.1)}}
+
+  /* ── 화면 전환 ── */
+  .screen { display:none; position:relative; z-index:1; }
+  .screen.active { display:block; }
+  .screen-flex { display:none; position:relative; z-index:1; flex-direction:column; align-items:center; }
+  .screen-flex.active { display:flex; }
+
+  /* ════════════════════════════
+     0. 이름 입력 화면
+  ════════════════════════════ */
+  #screen-name {
+    min-height:100vh; justify-content:center;
+    padding: 40px 20px 100px;
+  }
+  .name-card {
+    background:var(--cream); border-radius:28px; border:3px solid white;
+    box-shadow:0 8px 32px rgba(0,0,0,0.18);
+    overflow:hidden; width:100%; max-width:380px;
+    animation:popIn 0.6s cubic-bezier(0.34,1.56,0.64,1) both;
+  }
+  .name-card-top {
+    background:linear-gradient(135deg,#FF6B6B,#ff8e53);
+    padding:32px 24px 24px; text-align:center;
+  }
+  .name-big-icon { font-size:70px; display:block; filter:drop-shadow(0 4px 8px rgba(0,0,0,0.15)); }
+  .name-card-title { font-family:'Jua',sans-serif; font-size:26px; color:white; text-shadow:0 3px 0 rgba(0,0,0,0.15); margin-top:8px; line-height:1.3; }
+  .name-card-sub { font-size:13px; color:rgba(255,255,255,0.85); margin-top:6px; font-weight:700; }
+  .name-card-body { padding:24px; }
+  .name-label { font-size:13px; font-weight:800; color:#888; letter-spacing:0.06em; margin-bottom:8px; }
+  .name-input {
+    width:100%; padding:16px 18px; border:2.5px solid #e0d8cf; border-radius:14px;
+    font-size:20px; font-family:'Jua',sans-serif; color:var(--dark);
+    background:white; outline:none; text-align:center;
+    transition:border-color 0.2s, box-shadow 0.2s;
+    margin-bottom:8px;
+  }
+  .name-input:focus { border-color:var(--brick); box-shadow:0 0 0 4px rgba(255,107,107,0.12); }
+  .name-input.shake { animation:shake 0.4s; }
+  .name-hint { font-size:12px; color:#bbb; text-align:center; margin-bottom:18px; }
+  .name-btn {
+    width:100%; padding:15px; background:linear-gradient(135deg,var(--brick),#ff8e53);
+    color:white; border:none; border-radius:14px;
+    font-family:'Jua',sans-serif; font-size:19px; cursor:pointer;
+    box-shadow:0 4px 0 #c0392b, 0 6px 16px rgba(255,107,107,0.35);
+    transition:transform 0.15s; position:relative; top:0;
+  }
+  .name-btn:hover{transform:translateY(-2px)} .name-btn:active{transform:translateY(2px)}
+  .name-error { color:var(--brick); font-size:13px; font-weight:800; text-align:center; margin-top:8px; min-height:18px; }
+
+  /* ════════════════════════════
+     1. 인트로 슬라이드
+  ════════════════════════════ */
+  #screen-intro { min-height:100vh; padding:0 0 80px; }
+
+  .intro-header { text-align:center; padding:28px 20px 16px; animation:popIn 0.6s cubic-bezier(0.34,1.56,0.64,1) both; }
+  .intro-header-icon { font-size:56px; display:block; filter:drop-shadow(0 4px 8px rgba(0,0,0,0.15)); }
+  .intro-header h1 { font-family:'Jua',sans-serif; font-size:26px; color:white; text-shadow:0 3px 0 rgba(0,0,0,0.2); margin-top:6px; line-height:1.3; }
+
+  .slide-wrap { width:100%; max-width:420px; padding:0 16px; }
+  .slide { display:none; background:var(--cream); border-radius:28px; border:3px solid white; box-shadow:0 8px 32px rgba(0,0,0,0.18); overflow:hidden; }
+  .slide.active { display:block; animation:slideInR 0.4s cubic-bezier(0.34,1.56,0.64,1) both; }
+
+  .slide-top { padding:26px 22px 20px; text-align:center; }
+  .slide-icon { font-size:60px; display:block; margin-bottom:8px; filter:drop-shadow(0 3px 6px rgba(0,0,0,0.12)); }
+  .slide-tag { display:inline-block; font-size:11px; font-weight:800; letter-spacing:0.08em; padding:3px 10px; border-radius:20px; margin-bottom:6px; }
+  .slide-title { font-family:'Jua',sans-serif; font-size:22px; line-height:1.3; }
+
+  .slide-body { padding:4px 22px 22px; }
+  .slide-desc { font-size:14px; color:#555; line-height:1.9; margin-bottom:12px; }
+  .slide-desc em { color:var(--brick); font-style:normal; font-weight:800; }
+  .slide-desc .player-name { color:#6366f1; font-style:normal; font-weight:800; }
+
+  .info-block { border-radius:14px; padding:12px 14px; margin-bottom:10px; display:flex; gap:10px; align-items:flex-start; }
+  .info-block.yellow{background:#FFFBEA;border:2px solid #FFD93D}
+  .info-block.blue{background:#EEF6FF;border:2px solid #93C5FD}
+  .info-block.green{background:#EDFFF2;border:2px solid #86EFAC}
+  .info-block.red{background:#FFF1F1;border:2px solid #FCA5A5}
+  .info-block.purple{background:#F3E8FF;border:2px solid #C084FC}
+  .info-block-icon{font-size:20px;flex-shrink:0}
+  .info-block-text{font-size:13px;font-weight:700;line-height:1.7;color:#333}
+  .info-block-text strong{display:block;font-size:14px;margin-bottom:1px}
+
+  .stage-preview-list{display:flex;flex-direction:column;gap:7px;margin-bottom:4px}
+  .stage-preview-item{background:white;border-radius:12px;border:1.5px solid #eee;padding:9px 13px;display:flex;align-items:center;gap:10px}
+  .sp-num{width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'Jua',sans-serif;font-size:12px;font-weight:800;flex-shrink:0}
+  .sp-text{font-size:13px;font-weight:700;color:var(--dark)}
+  .sp-sub{font-size:11px;color:#999}
+
+  /* 슬라이드 인디케이터 & 네비 */
+  .slide-indicator{display:flex;justify-content:center;gap:8px;margin:12px 0 8px}
+  .ind-dot{width:8px;height:8px;border-radius:50%;background:rgba(255,255,255,0.4);transition:all 0.3s}
+  .ind-dot.active{width:22px;border-radius:4px;background:white}
+  .slide-nav{display:flex;gap:10px;max-width:420px;width:100%;padding:0 16px;margin-top:4px}
+  .slide-btn-back{flex:0 0 48px;height:52px;border-radius:14px;background:rgba(255,255,255,0.3);border:2px solid rgba(255,255,255,0.5);font-size:20px;cursor:pointer;color:white;display:flex;align-items:center;justify-content:center;transition:background 0.15s}
+  .slide-btn-back:hover{background:rgba(255,255,255,0.45)}
+  .slide-btn-next{flex:1;height:52px;border-radius:14px;background:white;border:none;font-family:'Jua',sans-serif;font-size:18px;color:var(--brick);cursor:pointer;box-shadow:0 4px 0 rgba(0,0,0,0.1),0 6px 16px rgba(0,0,0,0.12);transition:transform 0.15s,box-shadow 0.15s}
+  .slide-btn-next:hover{transform:translateY(-2px)}
+  .slide-btn-next.start{background:linear-gradient(135deg,var(--brick),#ff8e53);color:white;box-shadow:0 4px 0 #c0392b,0 6px 16px rgba(255,107,107,0.4)}
+
+  /* ════════════════════════════
+     2. 스테이지 간 이동 안내
+  ════════════════════════════ */
+  #screen-transit { min-height:100vh; padding:0 0 80px; }
+  .transit-card {
+    background:var(--cream); border-radius:28px; border:3px solid white;
+    box-shadow:0 8px 32px rgba(0,0,0,0.18); overflow:hidden;
+    width:100%; max-width:420px; margin:0 16px;
+    animation:popIn 0.5s cubic-bezier(0.34,1.56,0.64,1) both;
+  }
+  .transit-top { padding:28px 22px 20px; text-align:center; }
+  .transit-icon { font-size:64px; display:block; margin-bottom:8px; filter:drop-shadow(0 3px 6px rgba(0,0,0,0.12)); }
+  .transit-label { font-size:11px; font-weight:800; letter-spacing:0.1em; padding:3px 12px; border-radius:20px; display:inline-block; margin-bottom:8px; }
+  .transit-title { font-family:'Jua',sans-serif; font-size:22px; line-height:1.3; }
+  .transit-body { padding:0 22px 24px; }
+  .transit-clear-badge {
+    background:linear-gradient(135deg,#FFD93D,#FF8E53);
+    border-radius:14px; padding:14px 18px; margin-bottom:14px;
+    display:flex; align-items:center; gap:12px;
+  }
+  .tcb-icon { font-size:32px; flex-shrink:0; }
+  .tcb-text { color:white; }
+  .tcb-text strong { display:block; font-family:'Jua',sans-serif; font-size:15px; margin-bottom:2px; }
+  .tcb-text span { font-size:12px; opacity:0.9; }
+  .transit-next-box {
+    background:#F0F7FF; border:2px solid #93C5FD; border-radius:14px;
+    padding:14px 16px; margin-bottom:14px;
+  }
+  .tnb-label { font-size:11px; font-weight:800; color:#93C5FD; letter-spacing:0.06em; margin-bottom:6px; }
+  .tnb-content { display:flex; align-items:center; gap:10px; }
+  .tnb-icon { font-size:30px; flex-shrink:0; }
+  .tnb-info strong { display:block; font-family:'Jua',sans-serif; font-size:16px; color:var(--dark); }
+  .tnb-info span { font-size:12px; color:#666; }
+  .walk-indicator {
+    display:flex; align-items:center; gap:6px;
+    font-size:12px; color:#888; font-weight:700; margin-bottom:14px;
+  }
+  .walk-dots { display:flex; gap:3px; }
+  .walk-dot { width:6px; height:6px; border-radius:50%; background:#ccc; }
+  .walk-dot.active { background:var(--brick); animation:shimmer 1s ease-in-out infinite; }
+  .transit-tip { font-size:13px; color:#666; line-height:1.7; font-weight:700; }
+  .transit-tip em { color:#6366f1; font-style:normal; }
+  .transit-go-btn {
+    width:calc(100% - 44px); margin:0 22px; padding:15px;
+    background:linear-gradient(135deg,var(--grass),#4caf50);
+    color:white; border:none; border-radius:14px;
+    font-family:'Jua',sans-serif; font-size:18px; cursor:pointer;
+    box-shadow:0 4px 0 #2e7d32, 0 6px 16px rgba(76,175,80,0.35);
+    transition:transform 0.15s; margin-bottom:22px;
+  }
+  .transit-go-btn:hover{transform:translateY(-2px)} .transit-go-btn:active{transform:translateY(2px)}
+
+  /* ════════════════════════════
+     3. 게임 화면
+  ════════════════════════════ */
+  #screen-game { padding:20px 16px 90px; max-width:420px; margin:0 auto; }
+
+  .game-header { text-align:center; padding:10px 0 14px; animation:popIn 0.6s cubic-bezier(0.34,1.56,0.64,1) both; }
+  .game-header-icon { font-size:40px; display:block; filter:drop-shadow(0 3px 6px rgba(0,0,0,0.15)); }
+  .game-header h1 { font-family:'Jua',sans-serif; font-size:20px; color:white; text-shadow:0 2px 0 rgba(0,0,0,0.2); }
+
+  .progress-wrap { background:rgba(255,255,255,0.3); border-radius:20px; padding:10px 14px; margin-bottom:14px; backdrop-filter:blur(6px); }
+  .progress-label { display:flex; justify-content:space-between; font-size:12px; font-weight:700; color:white; text-shadow:0 1px 3px rgba(0,0,0,0.2); margin-bottom:6px; }
+  .progress-bar { height:10px; background:rgba(255,255,255,0.3); border-radius:10px; overflow:hidden; }
+  .progress-fill { height:100%; background:var(--sun); border-radius:10px; transition:width 0.6s cubic-bezier(0.34,1.56,0.64,1); box-shadow:0 0 10px rgba(255,217,61,0.6); }
+  .stage-dots { display:flex; justify-content:center; gap:8px; margin-top:8px; }
+  .dot { width:28px; height:28px; border-radius:50%; background:rgba(255,255,255,0.25); border:2.5px solid rgba(255,255,255,0.4); display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:800; color:rgba(255,255,255,0.6); transition:all 0.4s; }
+  .dot.done { background:var(--sun); border-color:var(--sun); color:#8B6000; box-shadow:0 2px 8px rgba(255,217,61,0.5); }
+  .dot.active { background:white; border-color:white; color:var(--brick); box-shadow:0 0 0 4px rgba(255,255,255,0.3); animation:pulse 1.4s ease-in-out infinite; }
+
+  .stage-card { background:var(--cream); border-radius:24px; overflow:hidden; box-shadow:0 8px 32px rgba(0,0,0,0.18); margin-bottom:14px; border:3px solid white; animation:popIn 0.5s cubic-bezier(0.34,1.56,0.64,1) both; }
+  .card-banner { padding:13px 18px 11px; display:flex; align-items:center; gap:10px; }
+  .stage-emoji { font-size:34px; filter:drop-shadow(0 2px 4px rgba(0,0,0,0.15)); }
+  .stage-badge { font-family:'Jua',sans-serif; font-size:11px; letter-spacing:0.05em; background:rgba(0,0,0,0.15); color:white; padding:2px 8px; border-radius:20px; display:inline-block; margin-bottom:2px; }
+  .stage-title { font-family:'Jua',sans-serif; font-size:19px; color:white; text-shadow:0 2px 4px rgba(0,0,0,0.2); line-height:1.2; }
+
+  .card-image-wrap { margin:0 16px; border-radius:16px; overflow:hidden; border:2.5px solid rgba(0,0,0,0.07); background:#e8e0d8; position:relative; min-height:150px; display:flex; align-items:center; justify-content:center; }
+  .card-image-placeholder { text-align:center; padding:18px; }
+  .placeholder-icon { font-size:46px; display:block; margin-bottom:5px; }
+  .placeholder-text { font-size:13px; color:#888; font-weight:700; }
+  .img-hint { position:absolute; bottom:8px; right:8px; background:rgba(0,0,0,0.5); color:white; font-size:10px; padding:3px 8px; border-radius:10px; font-weight:700; }
+
+  .worksheet-banner { margin:12px 16px 0; background:linear-gradient(135deg,#6366f1,#8b5cf6); border-radius:14px; padding:10px 14px; display:flex; gap:10px; align-items:center; }
+  .wb-icon { font-size:20px; flex-shrink:0; }
+  .wb-text { color:white; font-size:12px; font-weight:700; line-height:1.5; }
+  .wb-text strong { display:block; font-size:13px; margin-bottom:1px; }
+
+  .card-body { padding:13px 18px 18px; }
+  .mission-label { font-size:11px; font-weight:800; letter-spacing:0.08em; color:#aaa; margin-bottom:5px; }
+  .mission-text { font-family:'Jua',sans-serif; font-size:15px; color:var(--dark); line-height:1.7; margin-bottom:11px; }
+  .mission-text em { color:var(--brick); font-style:normal; background:rgba(255,107,107,0.1); padding:0 3px; border-radius:4px; }
+  .mission-text .player-name { color:#6366f1; font-style:normal; }
+
+  .think-box { background:#F0F7FF; border:2px solid #93C5FD; border-radius:12px; padding:10px 13px; margin-bottom:12px; font-size:13px; color:#1e40af; font-weight:700; line-height:1.6; }
+  .think-box-title { font-size:11px; letter-spacing:0.06em; color:#93C5FD; font-weight:800; margin-bottom:2px; }
+
+  .hint-toggle-btn { width:100%; padding:9px; margin-bottom:10px; background:white; border:2px dashed #d1d5db; border-radius:12px; font-size:13px; color:#888; font-family:'Nanum Gothic',sans-serif; font-weight:700; cursor:pointer; transition:all 0.2s; display:flex; align-items:center; justify-content:center; gap:6px; }
+  .hint-toggle-btn:hover{border-color:#FFD93D;color:#92690a;background:#FFFDF0}
+  .hint-toggle-btn.revealed{background:#FFFDF0;border-color:#FFD93D;color:#92690a}
+  .hint-box { background:#FFF3CD; border:2px dashed #FFD93D; border-radius:12px; padding:10px 13px; font-size:13px; color:#7a5f00; font-weight:700; margin-bottom:10px; display:flex; gap:8px; align-items:flex-start; animation:slideDown 0.3s ease both; }
+  .hint-icon{font-size:17px;flex-shrink:0}
+
+  .answer-input { width:100%; padding:13px 18px; border:2.5px solid #e0d8cf; border-radius:14px; font-size:22px; font-family:'Jua',sans-serif; color:var(--dark); background:white; outline:none; transition:border-color 0.2s,box-shadow 0.2s; text-align:center; letter-spacing:0.08em; margin-bottom:10px; }
+  .answer-input:focus{border-color:var(--brick);box-shadow:0 0 0 4px rgba(255,107,107,0.12)}
+  .answer-input.shake{animation:shake 0.4s}
+  .answer-input.correct{border-color:var(--grass);background:#f0fff4}
+
+  .submit-btn { width:100%; padding:13px; background:linear-gradient(135deg,var(--brick),#ff8e53); color:white; border:none; border-radius:14px; font-family:'Jua',sans-serif; font-size:17px; cursor:pointer; transition:transform 0.15s,box-shadow 0.15s; box-shadow:0 4px 0 #c0392b,0 6px 16px rgba(255,107,107,0.35); }
+  .submit-btn:hover{transform:translateY(-2px)} .submit-btn:active{transform:translateY(2px);box-shadow:0 2px 0 #c0392b}
+  .wrong-msg{color:var(--brick);font-size:13px;font-weight:800;text-align:center;margin-top:8px;min-height:18px}
+  .try-count{font-size:12px;color:#aaa;text-align:center;margin-top:4px}
+  .correct-msg{text-align:center;padding:10px;font-family:'Jua',sans-serif;font-size:16px;color:#2e7d32;display:none}
+
+  /* ════════════════════════════
+     4. 최종 보상 화면
+  ════════════════════════════ */
+  #screen-reward {
+    display:none; position:fixed; inset:0; z-index:100;
+    flex-direction:column; align-items:center; justify-content:flex-start;
+    overflow-y:auto; padding:32px 20px 60px;
+    background:linear-gradient(160deg,#1a1a2e 0%,#16213e 50%,#0f3460 100%);
+  }
+  #screen-reward.show{display:flex}
+
+  .reward-stars-bg {
+    position:fixed; inset:0; pointer-events:none; overflow:hidden; z-index:0;
+  }
+  .star-particle {
+    position:absolute; width:3px; height:3px; background:white; border-radius:50%;
+    animation:twinkle 2s ease-in-out infinite;
+  }
+  @keyframes twinkle{0%,100%{opacity:0.2;transform:scale(1)}50%{opacity:1;transform:scale(1.5)}}
+
+  .reward-content { position:relative; z-index:1; width:100%; max-width:380px; text-align:center; }
+
+  .reward-trophy { font-size:80px; display:block; animation:bounce 0.8s cubic-bezier(0.34,1.56,0.64,1) 0.3s both; filter:drop-shadow(0 0 20px rgba(255,215,0,0.6)); }
+
+  .reward-title { font-family:'Jua',sans-serif; font-size:32px; color:white; text-shadow:0 0 30px rgba(255,215,0,0.5); margin:12px 0 4px; animation:slideDown 0.5s 0.6s both; }
+  .reward-stars { font-size:36px; letter-spacing:4px; margin:8px 0; animation:slideDown 0.5s 0.8s both; }
+
+  /* 수료증 카드 */
+  .certificate {
+    background:white; border-radius:24px; padding:24px 22px;
+    margin:16px 0; position:relative; overflow:hidden;
+    animation:popIn 0.6s cubic-bezier(0.34,1.56,0.64,1) 1s both;
+    border:3px solid #FFD93D;
+  }
+  .cert-corner { position:absolute; font-size:28px; opacity:0.15; }
+  .cert-corner.tl{top:10px;left:12px} .cert-corner.tr{top:10px;right:12px}
+  .cert-corner.bl{bottom:10px;left:12px} .cert-corner.br{bottom:10px;right:12px}
+  .cert-label { font-size:11px; font-weight:800; letter-spacing:0.12em; color:#FFD93D; margin-bottom:10px; }
+  .cert-title { font-family:'Jua',sans-serif; font-size:22px; color:var(--dark); margin-bottom:16px; }
+  .cert-name { font-family:'Jua',sans-serif; font-size:30px; color:#6366f1; margin-bottom:4px; border-bottom:3px solid #FFD93D; padding-bottom:8px; display:inline-block; }
+  .cert-sub { font-size:13px; color:#777; margin:10px 0 16px; line-height:1.7; }
+  .cert-badges { display:flex; justify-content:center; gap:8px; flex-wrap:wrap; margin-bottom:14px; }
+  .cert-badge { background:#f8f8f8; border:1.5px solid #eee; border-radius:10px; padding:7px 12px; font-size:11px; font-weight:800; color:#555; text-align:center; }
+  .cert-badge span { display:block; font-size:18px; margin-bottom:2px; }
+  .cert-seal { display:flex; align-items:center; justify-content:center; gap:8px; padding-top:12px; border-top:1.5px dashed #eee; font-size:12px; color:#aaa; font-weight:700; }
+
+  .reward-msg { font-size:15px; color:rgba(255,255,255,0.85); line-height:1.8; margin:8px 0 16px; animation:slideDown 0.5s 1.3s both; }
+  .reward-msg .player-name { color:#FFD93D; font-weight:800; }
+
+  .reward-btns { display:flex; flex-direction:column; gap:10px; width:100%; animation:slideDown 0.5s 1.5s both; }
+  .reward-share-btn { padding:15px; background:linear-gradient(135deg,#FFD93D,#FF8E53); color:white; border:none; border-radius:16px; font-family:'Jua',sans-serif; font-size:17px; cursor:pointer; box-shadow:0 4px 16px rgba(255,215,0,0.3); transition:transform 0.15s; }
+  .reward-share-btn:hover{transform:scale(1.02)}
+  .reward-restart-btn { padding:12px; background:transparent; color:rgba(255,255,255,0.6); border:2px solid rgba(255,255,255,0.25); border-radius:16px; font-family:'Jua',sans-serif; font-size:14px; cursor:pointer; }
+</style>
+</head>
+<body>
+
+<div class="bg-clouds">
+  <div class="cloud cloud1" style="left:-100px"></div>
+  <div class="cloud cloud2" style="left:-70px;top:22%"></div>
+  <div class="cloud cloud3" style="left:-130px;top:4%"></div>
+</div>
+<div class="grass-bar"></div>
+
+<!-- ════════════════════════════
+     0. 이름 입력 화면
+════════════════════════════ -->
+<div id="screen-name" class="screen-flex active">
+  <div class="name-card">
+    <div class="name-card-top">
+      <span class="name-big-icon">🏠</span>
+      <div class="name-card-title">우리 아파트<br>탐험대!</div>
+      <div class="name-card-sub">시작 전에 이름을 알려주세요 👋</div>
+    </div>
+    <div class="name-card-body">
+      <div class="name-label">탐험가 이름 또는 팀명</div>
+      <input class="name-input" id="name-input" type="text"
+        placeholder="예) 김민준, 행복팀 🏡"
+        maxlength="12" autocomplete="off"
+        onkeydown="if(event.key==='Enter') submitName()">
+      <div class="name-hint">최대 12자 · 가족 팀명도 좋아요!</div>
+      <button class="name-btn" onclick="submitName()">🚀 탐험 시작하기!</button>
+      <div class="name-error" id="name-error"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════
+     1. 인트로 슬라이드
+════════════════════════════ -->
+<div id="screen-intro" class="screen-flex" style="padding:0 0 80px;">
+  <div class="intro-header">
+    <span class="intro-header-icon">🗺️</span>
+    <h1 id="intro-title">탐험대, 환영해요!</h1>
+  </div>
+
+  <div class="slide-wrap">
+    <div class="slide active" id="slide-0">
+      <div class="slide-top" style="background:linear-gradient(135deg,#FF6B6B,#FF8E53);">
+        <span class="slide-icon">👋</span>
+        <div class="slide-tag" style="background:rgba(255,255,255,0.2);color:white;">게임 소개</div>
+        <div class="slide-title" style="color:white;text-shadow:0 2px 4px rgba(0,0,0,0.15);" id="intro-s0-title">탐험대!</div>
+      </div>
+      <div class="slide-body">
+        <p class="slide-desc" id="intro-s0-desc">로딩 중...</p>
+        <div class="info-block yellow">
+          <span class="info-block-icon">🎯</span>
+          <div class="info-block-text"><strong>총 5개의 미션</strong>각 스테이지마다 장소를 직접 찾아가서 관찰하고 생각해서 정답을 맞혀요!</div>
+        </div>
+        <div class="info-block green">
+          <span class="info-block-icon">👨‍👩‍👧‍👦</span>
+          <div class="info-block-text"><strong>함께 하면 더 재밌어요</strong>가족 모두 함께 이동하면서 미션을 풀어보세요!</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="slide" id="slide-1">
+      <div class="slide-top" style="background:linear-gradient(135deg,#6366f1,#8b5cf6);">
+        <span class="slide-icon">📋</span>
+        <div class="slide-tag" style="background:rgba(255,255,255,0.2);color:white;">게임 규칙</div>
+        <div class="slide-title" style="color:white;text-shadow:0 2px 4px rgba(0,0,0,0.15);">이렇게 진행해요!</div>
+      </div>
+      <div class="slide-body">
+        <div class="info-block blue"><span class="info-block-icon">📝</span><div class="info-block-text"><strong>학습지와 함께 푸세요</strong>각 스테이지는 <b>종이 문제지(학습지)</b>와 연계되어 있어요. 학습지를 먼저 읽고 나서 현장에서 확인하세요!</div></div>
+        <div class="info-block yellow"><span class="info-block-icon">🧠</span><div class="info-block-text"><strong>단순히 보는 게 아니에요!</strong>현장을 잘 관찰하고 <b>생각</b>해야 풀 수 있는 퀴즈예요. 눈으로 보고 → 머리로 생각하고 → 정답 입력!</div></div>
+        <div class="info-block green"><span class="info-block-icon">💡</span><div class="info-block-text"><strong>힌트는 신중하게!</strong>힌트 버튼을 누르기 전에 먼저 스스로 생각해보세요. 그래야 더 재밌어요!</div></div>
+        <div class="info-block red"><span class="info-block-icon">🚶</span><div class="info-block-text"><strong>직접 이동해야 해요</strong>각 스테이지는 서로 다른 장소에 있어요. 스테이지 사이에 이동 안내를 꼭 읽어봐요!</div></div>
+      </div>
+    </div>
+
+    <div class="slide" id="slide-2">
+      <div class="slide-top" style="background:linear-gradient(135deg,#22c55e,#16a34a);">
+        <span class="slide-icon">🗺️</span>
+        <div class="slide-tag" style="background:rgba(255,255,255,0.2);color:white;">미션 지도</div>
+        <div class="slide-title" style="color:white;text-shadow:0 2px 4px rgba(0,0,0,0.15);" id="intro-s2-title">오늘의 탐험 코스!</div>
+      </div>
+      <div class="slide-body">
+        <p class="slide-desc" id="intro-s2-desc">로딩 중...</p>
+        <div class="stage-preview-list">
+          <div class="stage-preview-item"><div class="sp-num" style="background:#FEE2E2;color:#dc2626;">1</div><div><div class="sp-text">🚪 아파트 정문</div><div class="sp-sub">간판을 관찰해봐요</div></div></div>
+          <div class="stage-preview-item"><div class="sp-num" style="background:#E0F2FE;color:#0284c7;">2</div><div><div class="sp-text">🛝 단지 놀이터</div><div class="sp-sub">시설물을 살펴봐요</div></div></div>
+          <div class="stage-preview-item"><div class="sp-num" style="background:#F3E8FF;color:#7c3aed;">3</div><div><div class="sp-text">📋 관리사무소 게시판</div><div class="sp-sub">공지사항을 읽어봐요</div></div></div>
+          <div class="stage-preview-item"><div class="sp-num" style="background:#DCFCE7;color:#16a34a;">4</div><div><div class="sp-text">🌳 단지 조경 공간</div><div class="sp-sub">나무 팻말을 찾아봐요</div></div></div>
+          <div class="stage-preview-item"><div class="sp-num" style="background:#FEF3C7;color:#d97706;">5</div><div><div class="sp-text">🏢 관리사무소 건물</div><div class="sp-sub">⭐ 최종 미션!</div></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="slide-indicator">
+    <div class="ind-dot active" id="ind-0"></div>
+    <div class="ind-dot" id="ind-1"></div>
+    <div class="ind-dot" id="ind-2"></div>
+  </div>
+  <div class="slide-nav">
+    <button class="slide-btn-back" id="slide-back" onclick="prevSlide()" style="display:none;">←</button>
+    <button class="slide-btn-next" id="slide-next" onclick="nextSlide()">다음 →</button>
+  </div>
+</div>
+
+<!-- ════════════════════════════
+     2. 스테이지 간 이동 안내
+════════════════════════════ -->
+<div id="screen-transit" class="screen-flex" style="padding:24px 0 80px;">
+  <div class="transit-card">
+    <div class="transit-top" id="transit-top">
+      <span class="transit-icon" id="transit-icon">🎉</span>
+      <div class="transit-label" id="transit-label">스테이지 클리어!</div>
+      <div class="transit-title" id="transit-title">다음 장소로 이동해요!</div>
+    </div>
+    <div style="padding:0 22px;">
+      <div class="transit-clear-badge">
+        <span class="tcb-icon" id="tcb-icon">⭐</span>
+        <div class="tcb-text">
+          <strong id="tcb-strong">스테이지 1 클리어!</strong>
+          <span id="tcb-span">대단해요! 정답을 맞혔어요!</span>
+        </div>
+      </div>
+      <div class="transit-next-box">
+        <div class="tnb-label">📍 다음 목적지</div>
+        <div class="tnb-content">
+          <span class="tnb-icon" id="transit-next-icon">🛝</span>
+          <div class="tnb-info">
+            <strong id="transit-next-name">단지 놀이터</strong>
+            <span id="transit-next-desc">정문에서 직진 후 오른쪽으로 이동하세요</span>
+          </div>
+        </div>
+      </div>
+      <div class="walk-indicator">
+        <span>이동 중</span>
+        <div class="walk-dots">
+          <div class="walk-dot active"></div><div class="walk-dot"></div><div class="walk-dot"></div>
+        </div>
+        <span id="transit-walk">도보 약 1분</span>
+      </div>
+      <div class="transit-tip" id="transit-tip">
+        💬 이동하면서 <em>학습지 다음 문제</em>를 미리 읽어보세요!
+      </div>
+    </div>
+    <button class="transit-go-btn" id="transit-go-btn" onclick="goToNextStage()">
+      ✅ 도착했어요! 미션 시작 →
+    </button>
+  </div>
+</div>
+
+<!-- ════════════════════════════
+     3. 게임 화면
+════════════════════════════ -->
+<div id="screen-game" class="screen">
+  <div style="max-width:420px;margin:0 auto;">
+    <div class="game-header">
+      <span class="game-header-icon">🏠</span>
+      <h1>우리 아파트 탐험대!</h1>
+    </div>
+    <div class="progress-wrap">
+      <div class="progress-label">
+        <span id="progress-text">탐험 시작!</span>
+        <span id="progress-pct">0 / 5</span>
+      </div>
+      <div class="progress-bar"><div class="progress-fill" id="progress-fill" style="width:0%"></div></div>
+      <div class="stage-dots">
+        <div class="dot active" id="dot-0">1</div><div class="dot" id="dot-1">2</div>
+        <div class="dot" id="dot-2">3</div><div class="dot" id="dot-3">4</div><div class="dot" id="dot-4">5</div>
+      </div>
+    </div>
+
+    <div class="stage-card" id="stage-card">
+      <div class="card-banner" id="card-banner">
+        <span class="stage-emoji" id="card-emoji">🚪</span>
+        <div><span class="stage-badge" id="card-badge">STAGE 1</span><div class="stage-title" id="card-title">로딩 중...</div></div>
+      </div>
+      <div class="card-image-wrap">
+        <div class="card-image-placeholder">
+          <span class="placeholder-icon" id="placeholder-icon">🚪</span>
+          <p class="placeholder-text" id="placeholder-text">이동 중...</p>
+        </div>
+        <span class="img-hint">📸 현장 사진</span>
+      </div>
+      <div class="worksheet-banner">
+        <span class="wb-icon">📝</span>
+        <div class="wb-text"><strong>학습지와 함께 풀기!</strong><span id="worksheet-ref">학습지를 참고하세요.</span></div>
+      </div>
+      <div class="card-body">
+        <div class="mission-label">🎯 미션</div>
+        <div class="mission-text" id="mission-text">로딩 중...</div>
+        <div class="think-box">
+          <div class="think-box-title">🧠 생각해봐요</div>
+          <span id="think-text">로딩 중...</span>
+        </div>
+        <button class="hint-toggle-btn" id="hint-btn" onclick="toggleHint()">💡 힌트가 필요해요 (클릭해서 보기)</button>
+        <div class="hint-box" id="hint-box" style="display:none;"><span class="hint-icon">💡</span><span id="hint-text">힌트 내용</span></div>
+        <input class="answer-input" id="answer-input" type="text" placeholder="정답 입력" maxlength="15" autocomplete="off" onkeydown="if(event.key==='Enter') checkAnswer()">
+        <button class="submit-btn" id="submit-btn" onclick="checkAnswer()">✅ 정답 확인!</button>
+        <p class="wrong-msg" id="wrong-msg"></p>
+        <p class="try-count" id="try-count"></p>
+        <div class="correct-msg" id="correct-msg" style="display:none;"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════
+     4. 최종 보상 화면
+════════════════════════════ -->
+<div id="screen-reward">
+  <div class="reward-stars-bg" id="stars-bg"></div>
+  <div class="reward-content">
+    <span class="reward-trophy">🏆</span>
+    <div class="reward-title">탐험 완료!</div>
+    <div class="reward-stars">⭐⭐⭐⭐⭐</div>
+
+    <div class="certificate">
+      <span class="cert-corner tl">🏠</span><span class="cert-corner tr">🏠</span>
+      <span class="cert-corner bl">⭐</span><span class="cert-corner br">⭐</span>
+      <div class="cert-label">🏅 탐험대 수료증</div>
+      <div class="cert-title">이 증서를 드립니다</div>
+      <div class="cert-name" id="cert-name">탐험가</div>
+      <div class="cert-sub" id="cert-sub">위 탐험가는 우리 아파트 단지를 직접 탐험하며<br>5개의 미션을 모두 훌륭히 완수하였기에<br>이 수료증을 드립니다.</div>
+      <div class="cert-badges">
+        <div class="cert-badge"><span>🚪</span>정문 탐험</div>
+        <div class="cert-badge"><span>🛝</span>놀이터</div>
+        <div class="cert-badge"><span>📋</span>게시판</div>
+        <div class="cert-badge"><span>🌳</span>나무 박사</div>
+        <div class="cert-badge"><span>🔑</span>최종 클리어</div>
+      </div>
+      <div class="cert-seal">
+        <span>🏠</span>
+        <span id="cert-date">2024년 탐험대</span>
+        <span>🏠</span>
+      </div>
+    </div>
+
+    <div class="reward-msg" id="reward-msg">로딩 중...</div>
+
+    <div class="reward-btns">
+      <button class="reward-share-btn" onclick="shareResult()">📤 수료증 자랑하기!</button>
+      <button class="reward-restart-btn" onclick="restartGame()">🔄 처음부터 다시 하기</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ══════════════════════════════
+//  플레이어 이름
+// ══════════════════════════════
+let playerName = '';
+
+function submitName() {
+  const val = document.getElementById('name-input').value.trim();
+  if(!val) {
+    const inp = document.getElementById('name-input');
+    inp.className = 'name-input shake';
+    setTimeout(()=>inp.className='name-input',400);
+    document.getElementById('name-error').textContent = '이름 또는 팀명을 입력해주세요!';
+    return;
+  }
+  playerName = val;
+  document.getElementById('name-error').textContent = '';
+  showScreen('intro');
+  buildIntroTexts();
+}
+
+function n() { return playerName; } // 이름 단축
+
+// ══════════════════════════════
+//  인트로 슬라이드
+// ══════════════════════════════
+const TOTAL_SLIDES = 3;
+let currentSlide = 0;
+
+function buildIntroTexts() {
+  document.getElementById('intro-title').textContent = `${n()} 탐험대, 환영해요!`;
+  document.getElementById('intro-s0-title').textContent = `${n()}, 준비됐나요?`;
+  document.getElementById('intro-s0-desc').innerHTML =
+    `<em>${n()}</em> 탐험대, 반가워요! 🎉<br><br>우리 아파트 단지에는 평소에 그냥 지나쳤던 신기한 것들이 많이 숨어 있어요! 오늘은 단지 곳곳을 <em>탐험</em>하면서 재미있는 미션을 함께 해결해봐요. 🔍`;
+  document.getElementById('intro-s2-title').textContent = `${n()}의 오늘 탐험 코스!`;
+  document.getElementById('intro-s2-desc').innerHTML =
+    `<em>${n()}</em>이(가) 방문할 5곳이에요.<br>모두 우리 아파트 단지 안에 있어요! 🏃`;
+  showSlide(0);
+}
+
+function showSlide(idx) {
+  document.querySelectorAll('.slide').forEach((s,i) => {
+    if(i===idx){ s.classList.add('active'); s.style.animation='none'; void s.offsetWidth; s.style.animation='slideInR 0.4s cubic-bezier(0.34,1.56,0.64,1) both'; }
+    else s.classList.remove('active');
+  });
+  document.querySelectorAll('.ind-dot').forEach((d,i)=>d.classList.toggle('active',i===idx));
+  document.getElementById('slide-back').style.display = idx===0?'none':'flex';
+  const nb = document.getElementById('slide-next');
+  if(idx===TOTAL_SLIDES-1){ nb.textContent=`🚀 ${n()}, 탐험 시작!`; nb.className='slide-btn-next start'; }
+  else { nb.textContent='다음 →'; nb.className='slide-btn-next'; }
+  currentSlide = idx;
+}
+function nextSlide(){ if(currentSlide<TOTAL_SLIDES-1) showSlide(currentSlide+1); else startGame(); }
+function prevSlide(){ if(currentSlide>0) showSlide(currentSlide-1); }
+
+// ══════════════════════════════
+//  게임 데이터
+// ══════════════════════════════
+const STAGES = [
+  {
+    emoji:'🚪', color:['#FF6B6B','#ff8e53'], badge:'STAGE 1', title:'아파트 정문을 찾아라!',
+    placeholderIcon:'🚪', placeholderText:'아파트 정문으로 이동하세요!',
+    worksheetRef:'학습지 1번 문제를 먼저 읽고 정문으로 이동하세요.',
+    mission:'정문의 <em>아파트 이름 간판</em>을 찾아보세요.<br>간판에서 <em>한글로 된 글자</em>가 몇 개인지 세어보세요!',
+    thinkText:'간판에 한글, 숫자, 영어가 섞여 있을 수 있어요. 한글 글자만 골라서 세는 게 포인트! 손가락으로 하나씩 짚어봐요.',
+    hint:'힌트: 간판 글자를 손가락으로 하나씩 짚으며 세어보세요. 숫자와 영어는 빼야 해요!',
+    answers:['4','네','다섯','5','여섯','6'],
+    wrongMsg:'한글 글자만 골라서 세어보세요! 숫자와 영어는 빼야 해요 🤭',
+    correctMsg:'정답이에요! 대단한 탐험가예요! 🎉',
+  },
+  {
+    emoji:'🛝', color:['#4ECDC4','#2ecc71'], badge:'STAGE 2', title:'놀이터의 비밀 숫자!',
+    placeholderIcon:'🛝', placeholderText:'단지 놀이터로 이동하세요!',
+    worksheetRef:'학습지 2번 문제를 읽고 놀이터 안전 표지판을 찾아보세요.',
+    mission:'놀이터에서 <em>안전 표지판</em>을 찾아보세요.<br>표지판에 적힌 숫자들을 <em>모두 더한 값</em>을 입력하세요!',
+    thinkText:'표지판에는 여러 숫자가 있어요. (예: 이용 나이, 무게 제한 등) 눈에 보이는 숫자를 모두 찾아서 더해봐요!',
+    hint:'힌트: 표지판 전체를 꼼꼼히 읽어보세요. 작게 적힌 숫자도 있을 수 있어요!',
+    answers:['10','12','15','7','8'],
+    wrongMsg:'표지판의 모든 숫자를 더해봤나요? 하나씩 찾아보세요! 🔢',
+    correctMsg:'정답! 수학 천재 탐험가예요! ➕🎉',
+  },
+  {
+    emoji:'📋', color:['#A855F7','#6366f1'], badge:'STAGE 3', title:'게시판 암호 해독!',
+    placeholderIcon:'📋', placeholderText:'관리사무소 게시판으로 이동!',
+    worksheetRef:'학습지 3번을 읽고 게시판에서 단서를 찾아보세요.',
+    mission:'아파트 <em>공지 게시판</em>에서 가장 최근 공지를 찾아보세요.<br>제목에서 <em>동물 이름</em>이 들어간 단어를 입력하세요!',
+    thinkText:'공지 제목에 동물 이름이 숨어 있을 수도 있어요. 학습지의 힌트를 잘 활용하세요!',
+    hint:'힌트: 동물 이름이 직접 나오지 않을 수 있어요. 학습지 3번 단서를 참고하세요!',
+    answers:['고양이','개','비둘기','까치','참새'],
+    wrongMsg:'게시판 공지 제목을 천천히 다시 읽어보세요 📌',
+    correctMsg:'훌륭해요! 암호를 해독했어요! 🔍🎉',
+  },
+  {
+    emoji:'🌳', color:['#22c55e','#16a34a'], badge:'STAGE 4', title:'나무 박사가 되어라!',
+    placeholderIcon:'🌳', placeholderText:'단지 조경 공간으로 이동하세요!',
+    worksheetRef:'학습지 4번을 참고하여 입구 조경 공간을 탐험하세요.',
+    mission:'단지 입구 <em>왼쪽 조경 공간</em>의 나무를 찾아보세요.<br>나무 팻말 이름을 보고, <em>이 나무 잎은 몇 가지 색?</em>을 맞혀보세요!',
+    thinkText:'나무 이름을 찾은 다음, 그 나무의 잎이 계절에 따라 몇 가지 색으로 변하는지 생각해봐요. 학습지에 힌트가 있어요!',
+    hint:'힌트: 은행나무는 초록→노랑 2가지, 단풍나무는 초록→빨강 2가지예요!',
+    answers:['2','두','3','세','1','하나'],
+    wrongMsg:'나무 이름을 먼저 확인하고 학습지를 다시 읽어보세요 🍂',
+    correctMsg:'나무 박사 인증! 정말 대단해요! 🌳🎉',
+  },
+  {
+    emoji:'🔑', color:['#f59e0b','#ef4444'], badge:'STAGE 5 ⭐', title:'최종 미션: 비밀번호!',
+    placeholderIcon:'🏢', placeholderText:'관리사무소 앞으로 이동하세요!',
+    worksheetRef:'학습지 5번 최종 문제! 지금까지 모은 단서를 모두 활용하세요.',
+    mission:'지금까지 찾은 단서들을 학습지에 모아보세요.<br>학습지에 완성된 <em>비밀 코드 4자리</em>를 입력하면 탐험 완료!',
+    thinkText:'스테이지 1~4에서 찾은 숫자 단서들을 학습지에 적어두었나요? 그 숫자들을 조합하면 비밀 코드가 완성돼요!',
+    hint:'힌트: 각 스테이지의 정답 숫자를 순서대로 이어쓰면 비밀 코드가 나와요!',
+    answers:['1234','5678','2024','0000'],
+    wrongMsg:'학습지에서 각 스테이지 정답 숫자를 다시 확인해보세요! 📖',
+    correctMsg:'비밀 코드 해독 성공! 탐험 완료! 🏆🎉',
+  },
+];
+
+// 스테이지 간 이동 안내 데이터
+const TRANSIT_DATA = [
+  { // 1→2 클리어 후
+    bgColor:['#FF6B6B','#FF8E53'],
+    icon:'🎊', label:'STAGE 1 클리어!', title:`잘했어요! 이제 놀이터로!`,
+    clearIcon:'🌟', clearStrong:'스테이지 1 클리어!', clearSpan:'정문 탐험을 완료했어요!',
+    nextIcon:'🛝', nextName:'단지 놀이터', nextDesc:'정문에서 단지 안쪽으로 직진하면 있어요',
+    walk:'도보 약 1~2분', tip:'이동하면서 학습지 2번 문제를 미리 읽어봐요!',
+  },
+  { // 2→3 클리어 후
+    bgColor:['#4ECDC4','#2ecc71'],
+    icon:'🎊', label:'STAGE 2 클리어!', title:'대단해요! 게시판으로!',
+    clearIcon:'🌟', clearStrong:'스테이지 2 클리어!', clearSpan:'놀이터 비밀 숫자를 찾았어요!',
+    nextIcon:'📋', nextName:'관리사무소 게시판', nextDesc:'관리사무소 건물 입구 근처에 있어요',
+    walk:'도보 약 2분', tip:'이동하면서 학습지 3번 문제를 미리 읽어봐요!',
+  },
+  { // 3→4 클리어 후
+    bgColor:['#A855F7','#6366f1'],
+    icon:'🎊', label:'STAGE 3 클리어!', title:'암호 해독 성공! 조경으로!',
+    clearIcon:'🌟', clearStrong:'스테이지 3 클리어!', clearSpan:'게시판 암호를 해독했어요!',
+    nextIcon:'🌳', nextName:'단지 조경 공간', nextDesc:'단지 입구 왼쪽 화단 근처예요',
+    walk:'도보 약 1분', tip:'이동하면서 학습지 4번 문제를 미리 읽어봐요!',
+  },
+  { // 4→5 클리어 후
+    bgColor:['#22c55e','#16a34a'],
+    icon:'🌟', label:'STAGE 4 클리어!', title:'이제 최종 미션이에요!',
+    clearIcon:'🏅', clearStrong:'스테이지 4 클리어!', clearSpan:'나무 박사가 됐어요! 마지막이에요!',
+    nextIcon:'🏢', nextName:'관리사무소 건물', nextDesc:'관리사무소 건물 정문 앞으로 모이세요',
+    walk:'도보 약 1~2분', tip:'학습지 5번 최종 문제! 단서를 모두 모아봐요!',
+  },
+];
+
+// ══════════════════════════════
+//  화면 전환
+// ══════════════════════════════
+function showScreen(name) {
+  document.getElementById('screen-name').classList.remove('active');
+  document.getElementById('screen-intro').classList.remove('active');
+  document.getElementById('screen-transit').classList.remove('active');
+  document.getElementById('screen-game').classList.remove('active');
+  if(name==='name') document.getElementById('screen-name').classList.add('active');
+  if(name==='intro') document.getElementById('screen-intro').classList.add('active');
+  if(name==='transit') document.getElementById('screen-transit').classList.add('active');
+  if(name==='game') document.getElementById('screen-game').classList.add('active');
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+// ══════════════════════════════
+//  게임 상태
+// ══════════════════════════════
+let current = 0;
+let tries = 0;
+let solved = false;
+let hintRevealed = false;
+
+function startGame() {
+  showScreen('game');
+  loadStage(0);
+}
+
+function loadStage(idx) {
+  const s = STAGES[idx];
+  solved=false; tries=0; hintRevealed=false;
+
+  document.getElementById('card-banner').style.background=`linear-gradient(135deg,${s.color[0]},${s.color[1]})`;
+  document.getElementById('card-emoji').textContent=s.emoji;
+  document.getElementById('card-badge').textContent=s.badge;
+  document.getElementById('card-title').textContent=s.title;
+  document.getElementById('placeholder-icon').textContent=s.placeholderIcon;
+  document.getElementById('placeholder-text').textContent=s.placeholderText;
+  document.getElementById('worksheet-ref').textContent=s.worksheetRef;
+  // 미션 텍스트에 이름 삽입
+  document.getElementById('mission-text').innerHTML =
+    `<span class="player-name">${n()}</span>, ` + s.mission;
+  document.getElementById('think-text').textContent=s.thinkText;
+  document.getElementById('hint-text').textContent=s.hint;
+
+  const hintBtn=document.getElementById('hint-btn');
+  const hintBox=document.getElementById('hint-box');
+  hintBtn.className='hint-toggle-btn';
+  hintBtn.textContent='💡 힌트가 필요해요 (클릭해서 보기)';
+  hintBox.style.display='none';
+
+  const inp=document.getElementById('answer-input');
+  inp.value=''; inp.className='answer-input'; inp.disabled=false;
+  document.getElementById('wrong-msg').textContent='';
+  document.getElementById('try-count').textContent='';
+  document.getElementById('correct-msg').style.display='none';
+  document.getElementById('submit-btn').style.display='block';
+
+  updateProgress(idx);
+  const card=document.getElementById('stage-card');
+  card.style.animation='none'; void card.offsetWidth;
+  card.style.animation='popIn 0.5s cubic-bezier(0.34,1.56,0.64,1) both';
+}
+
+function toggleHint() {
+  hintRevealed=!hintRevealed;
+  const hintBtn=document.getElementById('hint-btn');
+  const hintBox=document.getElementById('hint-box');
+  if(hintRevealed){
+    hintBox.style.display='flex';
+    hintBtn.className='hint-toggle-btn revealed';
+    hintBtn.textContent='💡 힌트 보는 중 (숨기기)';
+  } else {
+    hintBox.style.display='none';
+    hintBtn.className='hint-toggle-btn';
+    hintBtn.textContent='💡 힌트가 필요해요 (클릭해서 보기)';
+  }
+}
+
+function updateProgress(idx) {
+  const done=idx;
+  document.getElementById('progress-fill').style.width=(done/STAGES.length*100)+'%';
+  document.getElementById('progress-pct').textContent=done+' / '+STAGES.length;
+  document.getElementById('progress-text').textContent=
+    done===0?`${n()}, 탐험 시작!`:done===STAGES.length?'탐험 완료! 🎉':`${done}개 클리어! 잘하고 있어요!`;
+  for(let i=0;i<STAGES.length;i++){
+    const dot=document.getElementById('dot-'+i);
+    dot.className='dot'+(i<done?' done':i===done?' active':'');
+    dot.textContent=i<done?'✓':(i+1);
+  }
+}
+
+function checkAnswer() {
+  if(solved) return;
+  const inp=document.getElementById('answer-input');
+  const val=inp.value.trim().toLowerCase().replace(/\s/g,'');
+  if(!val) return;
+  const s=STAGES[current];
+  const correct=s.answers.some(a=>a.toLowerCase().replace(/\s/g,'')=== val);
+  if(correct){
+    solved=true;
+    inp.className='answer-input correct'; inp.disabled=true;
+    document.getElementById('wrong-msg').textContent='';
+    document.getElementById('try-count').textContent='';
+    document.getElementById('submit-btn').style.display='none';
+    const cm=document.getElementById('correct-msg');
+    cm.style.display='block';
+    cm.textContent=`🎉 ${s.correctMsg}`;
+    updateProgress(current+1);
+    // 잠깐 후 다음으로
+    setTimeout(()=>{
+      if(current===STAGES.length-1){ showReward(); }
+      else { showTransit(current); }
+    }, 1800);
+  } else {
+    tries++;
+    inp.value=''; inp.className='answer-input shake';
+    setTimeout(()=>{ if(inp.className.includes('shake')) inp.className='answer-input'; },400);
+    document.getElementById('wrong-msg').textContent=s.wrongMsg;
+    document.getElementById('try-count').textContent=`(${tries}번째 도전 중... 힌트가 필요하면 위 버튼을 눌러봐요!)`;
+  }
+}
+
+// ── 스테이지 간 이동 화면 ──
+function showTransit(idx) {
+  const t=TRANSIT_DATA[idx];
+  document.getElementById('transit-top').style.background=`linear-gradient(135deg,${STAGES[idx].color[0]},${STAGES[idx].color[1]})`;
+  document.getElementById('transit-icon').textContent=t.icon;
+  document.getElementById('transit-label').textContent=t.label;
+  document.getElementById('transit-title').textContent=`${n()}, ${t.title.replace(/^.+?,\s*/,'')}`;
+  document.getElementById('tcb-icon').textContent=t.clearIcon;
+  document.getElementById('tcb-strong').textContent=`${n()}! ${t.clearStrong}`;
+  document.getElementById('tcb-span').textContent=t.clearSpan;
+  document.getElementById('transit-next-icon').textContent=t.nextIcon;
+  document.getElementById('transit-next-name').textContent=t.nextName;
+  document.getElementById('transit-next-desc').textContent=t.nextDesc;
+  document.getElementById('transit-walk').textContent=t.walk;
+  document.getElementById('transit-tip').innerHTML=`💬 <em>${n()}</em>, ${t.tip}`;
+  document.getElementById('transit-go-btn').textContent=
+    `✅ 도착했어요! 스테이지 ${idx+2} 시작 →`;
+  showScreen('transit');
+}
+
+function goToNextStage() {
+  current++;
+  showScreen('game');
+  loadStage(current);
+}
+
+// ── 최종 보상 화면 ──
+function showReward() {
+  // 날짜
+  const now=new Date();
+  document.getElementById('cert-date').textContent=
+    `${now.getFullYear()}년 ${now.getMonth()+1}월 ${now.getDate()}일`;
+  document.getElementById('cert-name').textContent=n();
+  document.getElementById('cert-sub').textContent=
+    `위 ${n()}은(는) 우리 아파트 단지를 직접 탐험하며\n5개의 미션을 모두 훌륭히 완수하였기에\n이 수료증을 드립니다.`;
+  document.getElementById('reward-msg').innerHTML=
+    `<span class="player-name">${n()}</span>은(는) 진정한 탐험대 대장이에요!<br>우리 아파트의 모든 비밀을 밝혀냈어요. 🏅<br>다음에도 또 탐험해요!`;
+
+  const rw=document.getElementById('screen-reward');
+  rw.classList.add('show');
+
+  // 별 배경
+  const bg=document.getElementById('stars-bg');
+  bg.innerHTML='';
+  for(let i=0;i<60;i++){
+    const star=document.createElement('div');
+    star.className='star-particle';
+    star.style.cssText=`left:${Math.random()*100}%;top:${Math.random()*100}%;animation-delay:${Math.random()*3}s;animation-duration:${1.5+Math.random()*2}s;opacity:${0.2+Math.random()*0.8}`;
+    bg.appendChild(star);
+  }
+  // 폭죽
+  for(let i=0;i<20;i++) setTimeout(()=>spawnConfetti(),i*150);
+}
+
+function spawnConfetti(){
+  const el=document.createElement('div');
+  const emojis=['🎉','⭐','🌟','🎊','✨','🏆','🎈','🏅'];
+  el.textContent=emojis[Math.floor(Math.random()*emojis.length)];
+  el.style.cssText=`position:fixed;font-size:${22+Math.random()*22}px;left:${Math.random()*100}vw;top:-40px;z-index:200;animation:fall${Date.now()} ${1.4+Math.random()}s linear forwards;pointer-events:none`;
+  const id=`fall${Date.now()}${Math.random()}`.replace('.','');
+  el.style.animationName=id;
+  document.body.appendChild(el);
+  const style=document.createElement('style');
+  style.textContent=`@keyframes ${id}{to{transform:translateY(110vh) rotate(${360+Math.random()*360}deg);opacity:0}}`;
+  document.head.appendChild(style);
+  setTimeout(()=>el.remove(),3000);
+}
+
+function shareResult(){
+  const text=`🏆 ${n()} 탐험대 완료!\n우리 아파트 5개 미션을 모두 해결했어요! ⭐⭐⭐⭐⭐\n탐험대 수료증 획득! 🏅`;
+  if(navigator.share){ navigator.share({title:'우리 아파트 탐험대 완료!',text}); }
+  else if(navigator.clipboard){ navigator.clipboard.writeText(text).then(()=>alert('📋 클립보드에 복사됐어요!')); }
+  else alert(text);
+}
+
+function restartGame(){
+  current=0; playerName='';
+  document.getElementById('screen-reward').classList.remove('show');
+  document.getElementById('name-input').value='';
+  showScreen('name');
+}
+</script>
+</body>
+</html>
